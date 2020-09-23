@@ -1,0 +1,8 @@
+.cpcache
+.nrepl-port
+/target
+/out
+/cljs-test-runner-out
+/.cljs_node_repl
+/.lein-failures
+/pom.xml*
