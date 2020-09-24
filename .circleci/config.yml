@@ -27,5 +27,4 @@ jobs:
           key: v1-dependencies-{{ checksum "deps.edn" }}
 
       - run: clojure -A:dev:clj-test
-      - run: clojure -A:dev:cljs-test
       - run: clojure -A:dev:cljs-test -c '{:optimizations :advanced, :pseudo-names true}'
