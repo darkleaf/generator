@@ -70,8 +70,8 @@
 
 (t/deftest illegal-state-test
   (let [gen (generator)]
-    (t/are [form] (thrown-with-msg? IllegalStateException
-                                    #"\AGenerator is done\z"
+    (t/are [form] (thrown-with-msg? ExceptionInfo
+                                    #"^Generator is done$"
                                     form)
       (gen/next gen)
       (gen/throw gen (ex-info "My error" {}))

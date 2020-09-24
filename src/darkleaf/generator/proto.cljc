@@ -4,6 +4,6 @@
 (defprotocol Generator
   (done? [this])
   (value [this])
-  (next [this] [this covalue])
+  (next [this covalue])
   (throw [this throwable])
-  (return [this] [this result]))
+  (return [this result]))

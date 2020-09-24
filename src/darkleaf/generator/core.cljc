@@ -5,19 +5,26 @@
    [darkleaf.generator.impl :as i])
   #?(:cljs (:require-macros [darkleaf.generator.core :refer [generator]])))
 
-(set! *warn-on-reflection* true)
-
 (def ^{:arglists '([gen])} done? p/done?)
 (def ^{:arglists '([gen])} value p/value)
-(def ^{:arglists '([gen] [gen covalue])} next p/next)
 (def ^{:arglists '([gen throwable])} throw p/throw)
-(def ^{:arglists '([gen] [gen result])} return p/return)
+
+(defn next
+  ([gen] (p/next gen nil))
+  ([gen covalue] (p/next gen covalue)))
+
+(defn return
+  ([gen] (p/return gen nil))
+  ([gen result] (p/return gen result)))
 
 (defn yield
   ([] nil)
   ([value] value))
 
+(defn- js? [env]
+  (contains? env :ns))
+
 (defmacro ^{:style/indent 0} generator [& body]
-  (i/body->generator `yield body))
+  (i/body->generator (js? &env) `yield body))
 
 (def wrap-stack)

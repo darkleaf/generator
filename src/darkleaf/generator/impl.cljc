@@ -3,14 +3,15 @@
    [darkleaf.generator.proto :as p]
    [cloroutine.core :refer [cr]]))
 
-(set! *warn-on-reflection* true)
+#?(:clj (set! *warn-on-reflection* true))
 
 (def interrupted-exception
-  (InterruptedException. "Interrupted generator"))
+  #?(:clj  (Error. "Interrupted generator")
+     :cljs ::interrupted-generator))
 
 (declare ->Generator)
 
-(defn body->generator [yield body]
+(defn body->generator [js? yield body]
   `(let [done?#      (atom false)
          value#      (atom nil)
          covalue-fn# (atom (fn [] nil))
@@ -19,32 +20,36 @@
          coroutine#  (cr {~yield resume#}
                          (try
                            ~@body
-                           (catch InterruptedException ex#
-                             (reset! value# @return#)
-                             @return#)
+                           (catch ~(if js? :default 'Error) ex#
+                             (if (= interrupted-exception ex#)
+                               (do (reset! value# @return#)
+                                   @return#)
+                               (throw ex#)))
                            (finally
                              (reset! done?# true))))]
      (reset! value# (coroutine#))
      (->Generator done?# value# covalue-fn# return# coroutine#)))
 
+(defn- reject-done [gen]
+  (if (p/done? gen)
+    (throw (ex-info "Generator is done" {:type :illegal-state}))))
+
 (deftype Generator [done? value covalue-fn return coroutine]
   p/Generator
   (done? [_] @done?)
   (value [_] @value)
-  (next [this] (.next this nil))
-  (next [_ covalue]
-    (if @done? (throw (IllegalStateException. "Generator is done")))
+  (next [this covalue]
+    (reject-done this)
     (reset! covalue-fn (fn [] covalue))
     (reset! value (coroutine))
     nil)
-  (throw [_ throwable]
-    (if @done? (throw (IllegalStateException. "Generator is done")))
+  (throw [this throwable]
+    (reject-done this)
     (reset! covalue-fn (fn [] (throw throwable)))
     (reset! value (coroutine))
     nil)
-  (return [this] (.return this nil))
-  (return [_ result]
-    (if @done? (throw (IllegalStateException. "Generator is done")))
+  (return [this result]
+    (reject-done this)
     (reset! return result)
     (reset! covalue-fn (fn [] (throw interrupted-exception)))
     (reset! value (coroutine))

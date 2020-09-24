@@ -16,7 +16,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "project.clj" }}-{{ checksum "deps.edn" }}
+            - v1-dependencies-{{ checksum "deps.edn" }}
 
       - run: clojure -R:dev:clj-test:cljs-test -e "(prn :deps)"
 
@@ -24,7 +24,8 @@ jobs:
           paths:
             - ~/.m2
             - ~/.gitlibs
-          key: v1-dependencies-{{ checksum "project.clj" }}-{{ checksum "deps.edn" }}
+          key: v1-dependencies-{{ checksum "deps.edn" }}
 
       - run: clojure -A:dev:clj-test
       - run: clojure -A:dev:cljs-test
+      - run: clojure -A:dev:cljs-test -c '{:optimizations :advanced, :pseudo-names true}'
