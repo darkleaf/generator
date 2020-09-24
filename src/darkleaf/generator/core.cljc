@@ -7,7 +7,7 @@
 
 (def ^{:arglists '([gen])} done? p/done?)
 (def ^{:arglists '([gen])} value p/value)
-(def ^{:arglists '([gen throwable])} throw p/throw)
+(def ^{:arglists '([gen throwable])} raise p/raise)
 
 (defn next
   ([gen] (p/next gen nil))
@@ -27,4 +27,4 @@
 (defmacro ^{:style/indent 0} generator [& body]
   (i/body->generator (js? &env) `yield body))
 
-(def wrap-stack)
+(def ^{:arglists '([gen])} wrap-stack i/wrap-stack)
