@@ -49,7 +49,7 @@
       (t/is (thrown? ExceptionInfo (gen/next gen)))
       (t/is (gen/done? gen)))))
 
-(t/deftest raise-&-catch-test
+(t/deftest gen-throw-&-catch-test
   (with-wrappers wrap
     (let [gen (generator
                 (try
@@ -57,11 +57,11 @@
                   (catch ExceptionInfo ex
                     (ex-message ex))))
           gen (wrap gen)]
-      (gen/raise gen (ex-info "My error" {}))
+      (gen/throw gen (ex-info "My error" {}))
       (t/is (= "My error" (gen/value gen)))
       (t/is (gen/done? gen)))))
 
-(t/deftest raise-&-finally-test
+(t/deftest gen-throw-&-finally-test
   (with-wrappers wrap
     (let [gen (generator
                 (try
@@ -71,7 +71,7 @@
                   (finally
                     (yield :from-finally))))
           gen (wrap gen)]
-      (gen/raise gen (ex-info "My error" {}))
+      (gen/throw gen (ex-info "My error" {}))
       (t/is (= :from-finally (gen/value gen)))
       (gen/next gen)
       (t/is (= "My error" (gen/value gen)))
@@ -122,7 +122,7 @@
                                       #"^Generator is done$"
                                       form)
         (gen/next gen)
-        (gen/raise gen (ex-info "My error" {}))
+        (gen/throw gen (ex-info "My error" {}))
         (gen/return gen)))))
 
 (t/deftest stack-test
@@ -259,7 +259,7 @@
     (t/is (= "My error" (gen/value gen)))
     (t/is (gen/done? gen))))
 
-(t/deftest raise-in-stack
+(t/deftest gen-throw-in-stack
   (let [nested (generator
                  (try
                    (yield :a)
@@ -274,13 +274,13 @@
                      (yield :finish))))
         gen    (gen/wrap-stack gen)]
     (t/is (= :a (gen/value gen)))
-    (gen/raise gen (ex-info "My error" {}))
+    (gen/throw gen (ex-info "My error" {}))
     (t/is (= :nested (gen/value gen)))
     (gen/next gen)
     (t/is (= :finish (gen/value gen)))
     (t/is (thrown? ExceptionInfo (gen/next gen)))))
 
-(t/deftest raise-in-stack-2
+(t/deftest gen-throw-in-stack-2
   (let [nested (generator
                  (try
                    (yield :a)
@@ -293,7 +293,7 @@
                      (yield :finish))))
         gen    (gen/wrap-stack gen)]
     (t/is (= :a (gen/value gen)))
-    (gen/raise gen (ex-info "My error" {}))
+    (gen/throw gen (ex-info "My error" {}))
     (t/is (= :finish (gen/value gen)))
     (t/is (thrown? ExceptionInfo (gen/next gen)))))
 

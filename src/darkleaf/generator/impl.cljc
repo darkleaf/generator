@@ -30,24 +30,24 @@
      (->Generator done?# value# covalue-fn# return# coroutine#)))
 
 (defn- reject-done [gen]
-  (if (p/done? gen)
+  (if (p/-done? gen)
     (throw (ex-info "Generator is done" {:type :illegal-state}))))
 
 (deftype Generator [done? value covalue-fn return coroutine]
   p/Generator
-  (done? [_] @done?)
-  (value [_] @value)
-  (next [this covalue]
+  (-done? [_] @done?)
+  (-value [_] @value)
+  (-next [this covalue]
     (reject-done this)
     (reset! covalue-fn (fn [] covalue))
     (reset! value (coroutine))
     nil)
-  (raise [this throwable]
+  (-throw [this throwable]
     (reject-done this)
     (reset! covalue-fn (fn [] (throw throwable)))
     (reset! value (coroutine))
     nil)
-  (return [this result]
+  (-return [this result]
     (reject-done this)
     (reset! return result)
     (reset! covalue-fn (fn [] (throw interrupted-exception)))
@@ -59,8 +59,8 @@
 
 (defn- join [stack]
   (let [gen   (stack/peek stack)
-        value (p/value gen)]
-    (if (p/done? gen)
+        value (p/-value gen)]
+    (if (p/-done? gen)
       (cond
         (instance? Generator value)
         (do (stack/pop! stack)
@@ -70,7 +70,7 @@
         nil
         :else
         (do (stack/pop! stack)
-            (p/next (stack/peek stack) value)
+            (p/-next (stack/peek stack) value)
             (recur stack)))
       (cond
         (instance? Generator value)
@@ -81,23 +81,23 @@
 
 (deftype StackWrapper [stack]
   p/Generator
-  (done? [this]
-    (-> stack (stack/peek) (p/done?)))
-  (value [this]
-    (-> stack (stack/peek) (p/value)))
-  (next [this covalue]
+  (-done? [this]
+    (-> stack (stack/peek) (p/-done?)))
+  (-value [this]
+    (-> stack (stack/peek) (p/-value)))
+  (-next [this covalue]
     (try
-      (-> stack (stack/peek) (p/next covalue))
+      (-> stack (stack/peek) (p/-next covalue))
       (join stack)
       (catch #?(:clj Throwable :cljs :default) ex
         (if (one? stack)
           (throw ex)
           (do (stack/pop! stack)
-              (p/raise this ex))))))
-  (raise [this throwable]
+              (p/-throw this ex))))))
+  (-throw [this throwable]
     (let [gen       (stack/peek stack)
           throwable (try
-                      (p/raise gen throwable)
+                      (p/-throw gen throwable)
                       nil
                       (catch #?(:clj Throwable :cljs :default) ex ex))]
       (when (some? throwable)
@@ -105,9 +105,9 @@
           (throw throwable))
         (stack/pop! stack)
         (recur throwable))))
-  (return [this result]
+  (-return [this result]
     (let [gen (stack/peek stack)]
-      (p/return gen result)
+      (p/-return gen result)
       (when-not (one? stack)
         (stack/pop! stack)
         (recur result)))))
