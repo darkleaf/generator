@@ -20,7 +20,7 @@
                          (try
                            ~@body
                            (catch ~(if js? :default 'Error) ex#
-                             (if (= interrupted-exception ex#)
+                             (if (identical? interrupted-exception ex#)
                                (do (reset! value# @return#)
                                    @return#)
                                (throw ex#)))
