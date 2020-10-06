@@ -62,7 +62,7 @@
         value (p/-value gen)]
     (if (p/-done? gen)
       (cond
-        (instance? Generator value)
+        (satisfies? p/Generator value)
         (do (stack/pop! stack)
             (stack/push! stack value)
             (recur stack))
@@ -73,7 +73,7 @@
             (p/-next (stack/peek stack) value)
             (recur stack)))
       (cond
-        (instance? Generator value)
+        (satisfies? p/Generator value)
         (do (stack/push! stack value)
             (recur stack))
         :else
