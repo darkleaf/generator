@@ -114,6 +114,22 @@
       (t/is (= 0 (gen/value gen)))
       (t/is (gen/done? gen)))))
 
+(t/deftest return-&-finally-test
+  (with-wrappers wrap
+    (let [gen (generator
+                (try
+                  (yield :a)
+                  42
+                  (finally
+                    (yield :b))))
+          gen (wrap gen)]
+      (t/is (= :a (gen/value gen)))
+      (gen/return gen 0)
+      (t/is (= :b (gen/value gen)))
+      (gen/next gen)
+      (t/is (= 0 (gen/value gen)))
+      (t/is (gen/done? gen)))))
+
 (t/deftest illegal-state-test
   (with-wrappers wrap
     (let [gen (generator)
