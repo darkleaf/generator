@@ -22,6 +22,11 @@
     (t/is (= [1 2 3] (gen/value gen)))
     (t/is (gen/done? gen))))
 
+(t/deftest loom-not-in-scope-test
+  (t/is (thrown-with-msg? ExceptionInfo
+                          #"^yield called without scope$"
+                          (yield))))
+
 ;; ~~~~~~~~~~~~~~~~ core-test ~~~~~~~~~~~~~~~~
 
 (defmacro with-wrappers [w-name & body]

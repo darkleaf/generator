@@ -15,7 +15,12 @@ public class LoomGenerator extends Continuation implements Generator {
 
     public static Object yield(Object value) throws Throwable {
         LoomGenerator gen = (LoomGenerator)Continuation.getCurrentContinuation(SCOPE);
-        //if (gen == null) {}
+        if (gen == null) {
+            IPersistentMap data = PersistentArrayMap.createAsIfByAssoc(new Object[] {
+                    Keyword.intern("type"), Keyword.intern("illegal-state")
+                });
+            throw new ExceptionInfo("yield called without scope", data);
+        }
         gen.value = value;
         Continuation.yield(SCOPE);
         if (gen.coerror != null) {
