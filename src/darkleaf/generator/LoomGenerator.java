@@ -16,10 +16,11 @@ public class LoomGenerator extends Continuation implements Generator {
     public static Object yield(Object value) throws Throwable {
         LoomGenerator gen = (LoomGenerator)Continuation.getCurrentContinuation(SCOPE);
         if (gen == null) {
-            IPersistentMap data = PersistentArrayMap.createAsIfByAssoc(new Object[] {
+            throw new ExceptionInfo(
+                "yield called without scope", RT.map(
                     Keyword.intern("type"), Keyword.intern("illegal-state")
-                });
-            throw new ExceptionInfo("yield called without scope", data);
+                )
+            );
         }
         gen.value = value;
         Continuation.yield(SCOPE);
@@ -81,10 +82,11 @@ public class LoomGenerator extends Continuation implements Generator {
 
     private void rejectDone() {
         if (this.isDone()) {
-            IPersistentMap data = PersistentArrayMap.createAsIfByAssoc(new Object[] {
+            throw new ExceptionInfo(
+                "Generator is done", RT.map(
                     Keyword.intern("type"), Keyword.intern("illegal-state")
-                });
-            throw new ExceptionInfo("Generator is done", data);
+                )
+            );
         }
     }
 }
