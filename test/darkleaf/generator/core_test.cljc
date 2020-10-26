@@ -14,16 +14,20 @@
 
 (t/deftest null-test
   (with-wrappers wrap
-    (let [gen (generator)
-          gen (wrap gen)]
+    (let [f*  (fn []
+                (generator))
+          f*  (wrap f*)
+          gen (f*)]
       (t/is (nil? (gen/value gen)))
       (t/is (gen/done? gen)))))
 
 (t/deftest yield-0-&-next-1-test
   (with-wrappers wrap
-    (let [gen (generator
-                (yield))
-          gen (wrap gen)]
+    (let [f*  (fn []
+                (generator
+                  (yield)))
+          f*  (wrap f*)
+          gen (f*)]
       (t/is (nil? (gen/value gen)))
       (gen/next gen)
       (t/is (nil? (gen/value gen)))
@@ -31,9 +35,11 @@
 
 (t/deftest yield-1-&-next-2-test
   (with-wrappers wrap
-    (let [gen (generator
-                (yield :my-value))
-          gen (wrap gen)]
+    (let [f*  (fn []
+                (generator
+                  (yield :my-value)))
+          f*  (wrap f*)
+          gen (f*)]
       (t/is (= :my-value (gen/value gen)))
       (gen/next gen :my-covalue)
       (t/is (= :my-covalue (gen/value gen)))
@@ -41,36 +47,42 @@
 
 (t/deftest throw-test
   (with-wrappers wrap
-    (let [gen (generator
-                (yield :a)
-                (throw (ex-info "My error" {})))
-          gen (wrap gen)]
+    (let [f*  (fn []
+                (generator
+                  (yield :a)
+                  (throw (ex-info "My error" {}))))
+          f*  (wrap f*)
+          gen (f*)]
       (t/is (= :a (gen/value gen)))
       (t/is (thrown? ExceptionInfo (gen/next gen)))
       (t/is (gen/done? gen)))))
 
 (t/deftest gen-throw-&-catch-test
   (with-wrappers wrap
-    (let [gen (generator
-                (try
-                  (yield)
-                  (catch ExceptionInfo ex
-                    (ex-message ex))))
-          gen (wrap gen)]
+    (let [f*  (fn []
+                (generator
+                  (try
+                    (yield)
+                    (catch ExceptionInfo ex
+                      (ex-message ex)))))
+          f*  (wrap f*)
+          gen (f*)]
       (gen/throw gen (ex-info "My error" {}))
       (t/is (= "My error" (gen/value gen)))
       (t/is (gen/done? gen)))))
 
 (t/deftest gen-throw-&-finally-test
   (with-wrappers wrap
-    (let [gen (generator
-                (try
-                  (yield)
-                  (catch ExceptionInfo ex
-                    (ex-message ex))
-                  (finally
-                    (yield :from-finally))))
-          gen (wrap gen)]
+    (let [f*  (fn []
+                (generator
+                  (try
+                    (yield)
+                    (catch ExceptionInfo ex
+                      (ex-message ex))
+                    (finally
+                      (yield :from-finally)))))
+          f*  (wrap f*)
+          gen (f*)]
       (gen/throw gen (ex-info "My error" {}))
       (t/is (= :from-finally (gen/value gen)))
       (gen/next gen)
@@ -79,50 +91,58 @@
 
 (t/deftest return-1-test
   (with-wrappers wrap
-    (let [gen (generator
-                (yield :a)
-                (yield :b)
-                42)
-          gen (wrap gen)]
+    (let [f*  (fn []
+                (generator
+                  (yield :a)
+                  (yield :b)
+                  42))
+          f*  (wrap f*)
+          gen (f*)]
       (gen/return gen)
       (t/is (nil? (gen/value gen)))
       (t/is (gen/done? gen)))))
 
 (t/deftest return-2-test
   (with-wrappers wrap
-    (let [gen (generator
-                (yield :a)
-                (yield :b)
-                42)
-          gen (wrap gen)]
+    (let [f*  (fn []
+                (generator
+                  (yield :a)
+                  (yield :b)
+                  42))
+          f*  (wrap f*)
+          gen (f*)]
       (gen/return gen 0)
       (t/is (= 0 (gen/value gen)))
       (t/is (gen/done? gen)))))
 
 (t/deftest return-&-catch-test
   (with-wrappers wrap
-    (let [gen (generator
-                (try
-                  (yield :a)
-                  (yield :b)
-                  42
-                  ;; this types and its subtypes are only allowed
-                  (catch #?(:clj Exception :cljs js/Error) ex
-                    nil)))
-          gen (wrap gen)]
+    (let [f*  (fn []
+                (generator
+                  (try
+                    (yield :a)
+                    (yield :b)
+                    42
+                    ;; this types and its subtypes are only allowed
+                    (catch #?(:clj Exception :cljs js/Error) ex
+                      nil))))
+          f*  (wrap f*)
+          gen (f*)]
       (gen/return gen 0)
       (t/is (= 0 (gen/value gen)))
       (t/is (gen/done? gen)))))
 
 (t/deftest return-&-finally-test
   (with-wrappers wrap
-    (let [gen (generator
-                (try
-                  (yield :a)
-                  42
-                  (finally
-                    (yield :b))))
-          gen (wrap gen)]
+    (let [f*  (fn []
+                (generator
+                  (try
+                    (yield :a)
+                    42
+                    (finally
+                      (yield :b)))))
+          f*  (wrap f*)
+          gen (f*)]
       (t/is (= :a (gen/value gen)))
       (gen/return gen 0)
       (t/is (= :b (gen/value gen)))
@@ -132,24 +152,29 @@
 
 (t/deftest illegal-state-test
   (with-wrappers wrap
-    (let [gen (generator)
-          gen (wrap gen)]
+    (let [f* (fn []
+               (generator))
+          f* (wrap f*)]
       (t/are [form] (thrown-with-msg? ExceptionInfo
                                       #"^Generator is done$"
-                                      form)
+                                      (let [gen (f*)]
+                                        form))
         (gen/next gen)
         (gen/throw gen (ex-info "My error" {}))
         (gen/return gen)))))
 
 (t/deftest stack-test
-  (let [nested (generator
-                 [(yield :a)
-                  (yield :b)])
-        gen    (generator
-                 [(yield :start)
-                  (yield nested)
-                  (yield :finish)])
-        gen    (gen/wrap-stack gen)]
+  (let [nested* (fn []
+                  (generator
+                    [(yield :a)
+                     (yield :b)]))
+        f*      (fn []
+                  (generator
+                    [(yield :start)
+                     (yield (nested*))
+                     (yield :finish)]))
+        f*      (gen/wrap-stack f*)
+        gen     (f*)]
     (t/is (= :start (gen/value gen)))
     (gen/next gen 1)
     (t/is (= :a (gen/value gen)))
@@ -162,26 +187,32 @@
     (t/is (gen/done? gen))))
 
 (t/deftest stack-test-2
-  (let [nested (generator
-                 (yield :a))
-        gen    (generator
-                 (yield nested))
-        gen    (gen/wrap-stack gen)]
+  (let [nested* (fn []
+                  (generator
+                    (yield :a)))
+        f*      (fn []
+                  (generator
+                    (yield (nested*))))
+        f*      (gen/wrap-stack f*)
+        gen     (f*)]
     (t/is (= :a (gen/value gen)))
     (gen/next gen :my-value)
     (t/is (= :my-value (gen/value gen)))
     (t/is (gen/done? gen))))
 
 (t/deftest stack-&-finally-test
-  (let [nested (generator
-                 (yield :a))
-        gen    (generator
-                 (yield :start)
-                 (try
-                   (yield nested)
-                   (finally
-                     (yield :finish))))
-        gen    (gen/wrap-stack gen)]
+  (let [nested* (fn []
+                  (generator
+                    (yield :a)))
+        f*      (fn []
+                  (generator
+                    (yield :start)
+                    (try
+                      (yield (nested*))
+                      (finally
+                        (yield :finish)))))
+        f*      (gen/wrap-stack f*)
+        gen     (f*)]
     (t/is (= :start (gen/value gen)))
     (gen/next gen)
     (t/is (= :a (gen/value gen)))
@@ -192,12 +223,15 @@
     (t/is (gen/done? gen))))
 
 (t/deftest tail-call-test
-  (let [nested (generator
-                 (yield :a))
-        gen    (generator
-                 (yield :start)
-                 nested)
-        gen    (gen/wrap-stack gen)]
+  (let [nested* (fn []
+                  (generator
+                    (yield :a)))
+        f*      (fn []
+                  (generator
+                    (yield :start)
+                    (nested*)))
+        f*      (gen/wrap-stack f*)
+        gen     (f*)]
     (t/is (= :start (gen/value gen)))
     (gen/next gen)
     (t/is (= :a (gen/value gen)))
@@ -206,15 +240,18 @@
     (t/is (gen/done? gen))))
 
 (t/deftest tail-call-&-finally-test
-  (let [nested (generator
-                 (yield :a))
-        gen    (generator
-                 (yield :start)
-                 (try
-                   nested
-                   (finally
-                     (yield :finish))))
-        gen    (gen/wrap-stack gen)]
+  (let [nested* (fn []
+                  (generator
+                    (yield :a)))
+        f*      (fn []
+                  (generator
+                    (yield :start)
+                    (try
+                      (nested*)
+                      (finally
+                        (yield :finish)))))
+        f*      (gen/wrap-stack f*)
+        gen     (f*)]
     (t/is (= :start (gen/value gen)))
     (gen/next gen)
     (t/is (= :finish (gen/value gen)))
@@ -225,21 +262,24 @@
     (t/is (gen/done? gen))))
 
 (t/deftest thrown-in-stack-test
-  (let [nested (generator
-                 (yield :a)
-                 (try
-                   (throw (ex-info "My error" {}))
-                   (finally
-                     (yield :b))))
-        gen    (generator
-                 (yield :start)
-                 (try
-                   (yield nested)
-                   (catch ExceptionInfo ex
-                     (ex-message ex))
-                   (finally
-                     (yield :finish))))
-        gen    (gen/wrap-stack gen)]
+  (let [nested* (fn []
+                  (generator
+                    (yield :a)
+                    (try
+                      (throw (ex-info "My error" {}))
+                      (finally
+                        (yield :b)))))
+        f*      (fn []
+                  (generator
+                    (yield :start)
+                    (try
+                      (yield (nested*))
+                      (catch ExceptionInfo ex
+                        (ex-message ex))
+                      (finally
+                        (yield :finish)))))
+        f*      (gen/wrap-stack f*)
+        gen     (f*)]
     (t/is (= :start (gen/value gen)))
     (gen/next gen)
     (t/is (= :a (gen/value gen)))
@@ -252,20 +292,24 @@
     (t/is (gen/done? gen))))
 
 (t/deftest thrown-in-stack-test-2
-  (let [nested-1 (generator
-                   (yield :a))
-        nested-2 (generator
-                   (yield nested-1)
-                   (throw (ex-info "My error" {})))
-        gen      (generator
-                   (yield :start)
-                   (try
-                     (yield nested-2)
-                     (catch ExceptionInfo ex
-                       (ex-message ex))
-                     (finally
-                       (yield :finish))))
-        gen      (gen/wrap-stack gen)]
+  (let [nested-1* (fn []
+                    (generator
+                      (yield :a)))
+        nested-2* (fn []
+                    (generator
+                      (yield (nested-1*))
+                      (throw (ex-info "My error" {}))))
+        f*        (fn []
+                    (generator
+                      (yield :start)
+                      (try
+                        (yield (nested-2*))
+                        (catch ExceptionInfo ex
+                          (ex-message ex))
+                        (finally
+                          (yield :finish)))))
+        f*        (gen/wrap-stack f*)
+        gen       (f*)]
     (t/is (= :start (gen/value gen)))
     (gen/next gen)
     (t/is (= :a (gen/value gen)))
@@ -276,19 +320,22 @@
     (t/is (gen/done? gen))))
 
 (t/deftest gen-throw-in-stack
-  (let [nested (generator
-                 (try
-                   (yield :a)
-                   (yield :b)
-                   (finally
-                     (yield :nested))))
-        gen    (generator
-                 (try
-                   (yield nested)
-                   42
-                   (finally
-                     (yield :finish))))
-        gen    (gen/wrap-stack gen)]
+  (let [nested* (fn []
+                  (generator
+                    (try
+                      (yield :a)
+                      (yield :b)
+                      (finally
+                        (yield :nested)))))
+        f*      (fn []
+                  (generator
+                    (try
+                      (yield (nested*))
+                      42
+                      (finally
+                        (yield :finish)))))
+        f*      (gen/wrap-stack f*)
+        gen     (f*)]
     (t/is (= :a (gen/value gen)))
     (gen/throw gen (ex-info "My error" {}))
     (t/is (= :nested (gen/value gen)))
@@ -297,33 +344,39 @@
     (t/is (thrown? ExceptionInfo (gen/next gen)))))
 
 (t/deftest gen-throw-in-stack-2
-  (let [nested (generator
-                 (try
-                   (yield :a)
-                   (yield :b)))
-        gen    (generator
-                 (try
-                   (yield nested)
-                   42
-                   (finally
-                     (yield :finish))))
-        gen    (gen/wrap-stack gen)]
+  (let [nested* (fn []
+                  (generator
+                    (try
+                      (yield :a)
+                      (yield :b))))
+        f*      (fn []
+                  (generator
+                    (try
+                      (yield (nested*))
+                      42
+                      (finally
+                        (yield :finish)))))
+        f*      (gen/wrap-stack f*)
+        gen     (f*)]
     (t/is (= :a (gen/value gen)))
     (gen/throw gen (ex-info "My error" {}))
     (t/is (= :finish (gen/value gen)))
     (t/is (thrown? ExceptionInfo (gen/next gen)))))
 
 (t/deftest return-in-stack
-  (let [nested (generator
-                 (yield :a)
-                 (yield :b))
-        gen    (generator
-                 (try
-                   (yield nested)
-                   42
-                   (finally
-                     (yield :finish))))
-        gen    (gen/wrap-stack gen)]
+  (let [nested* (fn []
+                  (generator
+                    (yield :a)
+                    (yield :b)))
+        f*      (fn []
+                  (generator
+                    (try
+                      (yield (nested*))
+                      42
+                      (finally
+                        (yield :finish)))))
+        f*      (gen/wrap-stack f*)
+        gen     (f*)]
     (t/is (= :a (gen/value gen)))
     (gen/return gen 0)
     (t/is (= :finish (gen/value gen)))
