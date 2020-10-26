@@ -79,41 +79,39 @@
         :else
         nil))))
 
-(deftype StackWrapper [stack]
-  p/Generator
-  (-done? [this]
-    (-> stack (stack/peek) (p/-done?)))
-  (-value [this]
-    (-> stack (stack/peek) (p/-value)))
-  (-next [this covalue]
-    (try
-      (-> stack (stack/peek) (p/-next covalue))
-      (join stack)
-      (catch #?(:clj Throwable :cljs :default) ex
-        (if (one? stack)
-          (throw ex)
-          (do (stack/pop! stack)
-              (p/-throw this ex))))))
-  (-throw [this throwable]
-    (let [gen       (stack/peek stack)
-          throwable (try
-                      (p/-throw gen throwable)
-                      nil
-                      (catch #?(:clj Throwable :cljs :default) ex ex))]
-      (when (some? throwable)
-        (if (one? stack)
-          (throw throwable))
-        (stack/pop! stack)
-        (recur throwable))))
-  (-return [this result]
-    (let [gen (stack/peek stack)]
-      (p/-return gen result)
-      (when-not (one? stack)
-        (stack/pop! stack)
-        (recur result)))))
-
 (defn wrap-stack [gen]
   (let [stack (stack/make)]
     (stack/push! stack gen)
     (join stack)
-    (->StackWrapper stack)))
+    (reify
+      p/Generator
+      (-done? [_]
+        (-> stack (stack/peek) (p/-done?)))
+      (-value [_]
+        (-> stack (stack/peek) (p/-value)))
+      (-next [this covalue]
+        (try
+          (-> stack (stack/peek) (p/-next covalue))
+          (join stack)
+          (catch #?(:clj Throwable :cljs :default) ex
+            (if (one? stack)
+              (throw ex)
+              (do (stack/pop! stack)
+                  (p/-throw this ex))))))
+      (-throw [_ throwable]
+        (let [gen       (stack/peek stack)
+              throwable (try
+                          (p/-throw gen throwable)
+                          nil
+                          (catch #?(:clj Throwable :cljs :default) ex ex))]
+          (when (some? throwable)
+            (if (one? stack)
+              (throw throwable))
+            (stack/pop! stack)
+            (recur throwable))))
+      (-return [_ result]
+        (let [gen (stack/peek stack)]
+          (p/-return gen result)
+          (when-not (one? stack)
+            (stack/pop! stack)
+            (recur result)))))))
