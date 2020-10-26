@@ -27,4 +27,4 @@
 (defmacro ^{:style/indent 0} generator [& body]
   (i/body->generator (js? &env) `yield body))
 
-(def ^{:arglists '([gen])} wrap-stack i/wrap-stack)
+(def ^{:arglists '([f*])} wrap-stack i/wrap-stack)
