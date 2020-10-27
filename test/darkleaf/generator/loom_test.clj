@@ -26,7 +26,7 @@
     (t/is (gen/done? gen))))
 
 (t/deftest loom-not-in-scope-test
-  (t/is (thrown-with-msg? ExceptionInfo
+  (t/is (thrown-with-msg? IllegalStateException
                           #"^yield called without scope$"
                           (yield))))
 

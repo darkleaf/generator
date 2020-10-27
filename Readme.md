@@ -4,4 +4,4 @@
 # Loom
 
 * ```(compile 'darkleaf.generator.proto)```
-* ```javac -d classes -cp `clojure -A:dev -Spath` src/darkleaf/generator/LoomGenerator.java```
+* ```javac -d classes -cp classes src/darkleaf/generator/LoomGenerator.java```

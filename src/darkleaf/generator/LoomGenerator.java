@@ -1,7 +1,6 @@
 package darkleaf.generator;
 
 import java.util.function.Supplier;
-import clojure.lang.*;
 import darkleaf.generator.proto.Generator;
 
 public class LoomGenerator extends Continuation implements Generator {
@@ -15,13 +14,7 @@ public class LoomGenerator extends Continuation implements Generator {
 
     public static Object yield(Object value) throws Throwable {
         LoomGenerator gen = (LoomGenerator)Continuation.getCurrentContinuation(SCOPE);
-        if (gen == null) {
-            throw new ExceptionInfo(
-                "yield called without scope", RT.map(
-                    Keyword.intern("type"), Keyword.intern("illegal-state")
-                )
-            );
-        }
+        if (gen == null) throw new IllegalStateException("yield called without scope");
         gen.value = value;
         Continuation.yield(SCOPE);
         if (gen.coerror != null) {
@@ -59,34 +52,21 @@ public class LoomGenerator extends Continuation implements Generator {
     }
 
     public Object _next(Object covalue) {
-        this.rejectDone();
         this.covalue = covalue;
         this.run();
         return null;
     }
 
     public Object _throw(Object throwable) {
-        this.rejectDone();
         this.coerror = (Throwable)throwable;
         this.run();
         return null;
     }
 
     public Object _return(Object returnValue) {
-        this.rejectDone();
         this.returnValue = returnValue;
         this.coerror = INTERRUPTED_EXCEPTION;
         this.run();
         return null;
-    }
-
-    private void rejectDone() {
-        if (this.isDone()) {
-            throw new ExceptionInfo(
-                "Generator is done", RT.map(
-                    Keyword.intern("type"), Keyword.intern("illegal-state")
-                )
-            );
-        }
     }
 }
