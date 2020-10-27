@@ -382,3 +382,62 @@
     (t/is (= :finish (gen/value gen)))
     (gen/next gen)
     (t/is (= 0 (gen/value gen)))))
+
+;; core analogs
+
+(defn- f->f* [f]
+  (fn [& args]
+    (generator
+      (apply f args))))
+
+(defn- call [f*]
+  (let [f*  (gen/wrap-stack f*)
+        gen (f*)]
+    (while (not (gen/done? gen))
+      (gen/next gen))
+    (gen/value gen)))
+
+(t/deftest reduce*-test
+  (let [str* (f->f* str)]
+    (t/are [coll] (= (           reduce  str  coll)
+                     (call #(gen/reduce* str* coll)))
+      nil
+      []
+      [:a]
+      [:a :b]
+      [:a :b :c])
+    (t/are [acc coll] (= (           reduce  str  acc coll)
+                         (call #(gen/reduce* str* acc coll)))
+      "" []
+      "" [:a]
+      "" [:a :b]
+      "" [:a :b :c]))
+  (let [with-reduced  (fn [_acc v]
+                        (if (= :done v)
+                          (reduced v)
+                          v))
+        with-reduced* (f->f* with-reduced)]
+    (t/are [coll] (= (           reduce  with-reduced  coll)
+                     (call #(gen/reduce* with-reduced* coll)))
+      [:done]
+      [1 :done]
+      [1 2 3 :done 4 5])))
+
+(t/deftest mapv*-test
+  (let [str* (f->f* str)]
+    (t/are [colls] (= (       apply     mapv  str  colls)
+                      (call #(apply gen/mapv* str* colls)))
+
+      [nil]
+      [[]]
+      [[0]]
+      [[0 1]]
+      [[0 1 2]]
+      [#{1 2 3}]
+      [{:a 1, :b 2}]
+
+      [nil nil]
+      [[] []]
+      [[0] [1 2]]
+      [[0 1] [2]]
+      [#{1 2} [3 4]])))
