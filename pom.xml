@@ -4,7 +4,7 @@
   <packaging>jar</packaging>
   <groupId>darkleaf</groupId>
   <artifactId>generator</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.0-loom</version>
   <name>generator</name>
   <dependencies>
     <dependency>
