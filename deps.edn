@@ -1,4 +1,4 @@
-{:deps    {cloroutine {:mvn/version "10"}}
+{:deps    {cloroutine/cloroutine {:mvn/version "10"}}
  :aliases {:dev       {:extra-paths ["test"]}
            :clj-test  {:extra-deps {com.cognitect/test-runner
                                     {:git/url "https://github.com/cognitect-labs/test-runner.git"
