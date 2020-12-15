@@ -1,3 +1,6 @@
+* ```(compile 'darkleaf.generator.proto)```
+* ```javac -d classes -cp classes src/darkleaf/generator/LoomGenerator.java```
+
 1) Update pom.xml `clojure -Spom`
 2) Update version in the pom.xml file
 3) Build jar `clojure -X:depstar`
