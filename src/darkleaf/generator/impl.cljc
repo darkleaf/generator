@@ -4,25 +4,6 @@
    [darkleaf.generator.stack :as stack]
    [cloroutine.core :refer [cr]]))
 
-(defn wrap-gen-reject-done [gen]
-  (let [check! #(when (p/-done? gen)
-                  (throw (ex-info "Generator is done" {:type :illegal-state})))]
-    (reify
-      p/Generator
-      (-done? [_]
-        (p/-done? gen))
-      (-value [_]
-        (p/-value gen))
-      (-next [_ covalue]
-        (check!)
-        (p/-next gen covalue))
-      (-throw [_ throwable]
-        (check!)
-        (p/-throw gen throwable))
-      (-return [_ result]
-        (check!)
-        (p/-return gen result)))))
-
 (def interrupted-exception
   #?(:clj  (Error. "Interrupted generator")
      :cljs ::interrupted-generator))
@@ -46,26 +27,35 @@
                            (finally
                              (reset! done?# true))))]
      (reset! value# (coroutine#))
-     (-> (->Generator done?# value# covalue-fn# return# coroutine#)
-         wrap-gen-reject-done)))
+     (->Generator done?# value# covalue-fn# return# coroutine#)))
+
+(defn- check-not-done! [gen]
+  (when (p/-done? gen)
+    (throw (ex-info "Generator is done" {:type :illegal-state}))))
 
 (deftype Generator [done? value covalue-fn return coroutine]
   p/Generator
   (-done? [_] @done?)
   (-value [_] @value)
   (-next [this covalue]
+    (check-not-done! this)
     (reset! covalue-fn (fn [] covalue))
     (reset! value (coroutine))
     nil)
   (-throw [this throwable]
+    (check-not-done! this)
     (reset! covalue-fn (fn [] (throw throwable)))
     (reset! value (coroutine))
     nil)
   (-return [this result]
+    (check-not-done! this)
     (reset! return result)
     (reset! covalue-fn (fn [] (throw interrupted-exception)))
     (reset! value (coroutine))
     nil))
+
+(defn- generator? [x]
+  (instance? Generator x))
 
 (defn- one? [coll]
   (= 1 (count coll)))
@@ -75,7 +65,7 @@
         value (p/-value gen)]
     (if (p/-done? gen)
       (cond
-        (satisfies? p/Generator value)
+        (generator? value)
         (do (stack/pop! stack)
             (stack/push! stack value)
             (recur stack))
@@ -86,7 +76,7 @@
             (p/-next (stack/peek stack) value)
             (recur stack)))
       (cond
-        (satisfies? p/Generator value)
+        (generator? value)
         (do (stack/push! stack value)
             (recur stack))
         :else
