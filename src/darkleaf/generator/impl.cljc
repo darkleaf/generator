@@ -11,22 +11,21 @@
 (declare ->Generator)
 
 (defn body->generator [js? yield body]
-  `(let [done?#      (atom false)
-         value#      (atom nil)
-         covalue-fn# (atom (fn [] nil))
-         return#     (atom nil)
+  `(let [done?#      (volatile! false)
+         value#      (volatile! nil)
+         covalue-fn# (volatile! (fn [] nil))
+         return#     (volatile! nil)
          resume#     (fn [] (@covalue-fn#))
          coroutine#  (cr {~yield resume#}
                          (try
                            ~@body
                            (catch ~(if js? :default 'Error) ex#
                              (if (identical? interrupted-exception ex#)
-                               (do (reset! value# @return#)
-                                   @return#)
+                               (vreset! value# @return#)
                                (throw ex#)))
                            (finally
-                             (reset! done?# true))))]
-     (reset! value# (coroutine#))
+                             (vreset! done?# true))))]
+     (vreset! value# (coroutine#))
      (->Generator done?# value# covalue-fn# return# coroutine#)))
 
 (defn- check-not-done! [gen]
@@ -39,19 +38,19 @@
   (-value [_] @value)
   (-next [this covalue]
     (check-not-done! this)
-    (reset! covalue-fn (fn [] covalue))
-    (reset! value (coroutine))
+    (vreset! covalue-fn (fn [] covalue))
+    (vreset! value (coroutine))
     nil)
   (-throw [this throwable]
     (check-not-done! this)
-    (reset! covalue-fn (fn [] (throw throwable)))
-    (reset! value (coroutine))
+    (vreset! covalue-fn (fn [] (throw throwable)))
+    (vreset! value (coroutine))
     nil)
   (-return [this result]
     (check-not-done! this)
-    (reset! return result)
-    (reset! covalue-fn (fn [] (throw interrupted-exception)))
-    (reset! value (coroutine))
+    (vreset! return result)
+    (vreset! covalue-fn (fn [] (throw interrupted-exception)))
+    (vreset! value (coroutine))
     nil))
 
 (defn- generator? [x]
