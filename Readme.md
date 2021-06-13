@@ -6,10 +6,10 @@
 The generator library brings [js-like](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) generators,
 also known as continuations, to Clojure(Script).
 
-Generators are useful for building effect systems like:
+Generators are useful for building [effect systems](https://overreacted.io/algebraic-effects-for-the-rest-of-us/) like:
 
 * [redux-saga](https://redux-saga.js.org/) for JavaScript. This is an awesome example of using generators. Check it out first!
-* [darkleaf/effect](https://github.com/darkleaf/effect)  for Clojure(Script)
+* [darkleaf/effect](https://github.com/darkleaf/effect) for Clojure(Script)
 
 Special thanks to [@leonoel](https://github.com/leonoel)
 for his [cloroutine](https://github.com/leonoel/cloroutine).
