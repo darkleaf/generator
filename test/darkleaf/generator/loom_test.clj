@@ -181,7 +181,7 @@
     (let [f* (fn []
                (generator))
           f* (wrap f*)]
-      (t/are [form] (thrown-with-msg? ExceptionInfo
+      (t/are [form] (thrown-with-msg? IllegalStateException
                                       #"^Generator is done$"
                                       (let [gen (f*)]
                                         form))
