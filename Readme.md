@@ -11,7 +11,8 @@ Generators are useful for building effect systems like:
 * [redux-saga](https://redux-saga.js.org/) for JavaScript. This is an awesome example of using generators. Check it out first!
 * [darkleaf/effect](https://github.com/darkleaf/effect)  for Clojure(Script)
 
-Special thanks to @leonoel for his [cloroutine](https://github.com/leonoel/cloroutine).
+Special thanks to [@leonoel](https://github.com/leonoel)
+for his [cloroutine](https://github.com/leonoel/cloroutine).
 
 ```clojure
 (require '[darkleaf.generator.core :as gen :refer [generator yield]])
