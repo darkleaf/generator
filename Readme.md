@@ -11,6 +11,8 @@ Generators are useful for building effect systems like:
 * [redux-saga](https://redux-saga.js.org/) for JavaScript. This is an awesome example of using generators. Check it out first!
 * [darkleaf/effect](https://github.com/darkleaf/effect)  for Clojure(Script)
 
+Special thanks to @leonoel for his [cloroutine](https://github.com/leonoel/cloroutine).
+
 ```clojure
 (require '[darkleaf.generator.core :as gen :refer [generator yield]])
 
@@ -61,7 +63,6 @@ if you want to call one red function from another one, you have to use `gen/wrap
 
 Fortunately, there is [Project Loom](https://openjdk.java.net/projects/loom/),
 which will bring first-class continuations on the JVM.
-
 With Loom, it is possible to use `yield` (1) in regular nested functions called by generator (3).
 Also, they can be passed into regular higher-order functions like `mapv` (2):
 
