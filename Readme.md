@@ -3,7 +3,7 @@
 
 # Generator
 
-The generator library brings [js-like generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator),
+The generator library brings [js-like](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) generators,
 also known as continuations, to Clojure(Script).
 
 Generators are useful for building effect systems like:
@@ -59,11 +59,11 @@ if you want to call one red function from another one, you have to use `gen/wrap
   (assert (gen/done? gen)))
 ```
 
-Fortunately, there is [Project Loom](https://openjdk.java.net/projects/loom/)
-will bring first-class continuations on the JVM.
+Fortunately, there is [Project Loom](https://openjdk.java.net/projects/loom/),
+which will bring first-class continuations on the JVM.
 
 With Loom, it is possible to use `yield` (1) in regular nested functions called by generator (3).
-Also, they can be passed into standard higher-order functions like `mapv` (2):
+Also, they can be passed into regular higher-order functions like `mapv` (2):
 
 ```clojure
 (ns darkleaf.generator.loom-test
