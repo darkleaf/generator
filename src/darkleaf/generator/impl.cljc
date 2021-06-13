@@ -2,7 +2,9 @@
   (:require
    [darkleaf.generator.proto :as p]
    [darkleaf.generator.stack :as stack]
-   [cloroutine.core :refer [cr]]))
+   [cloroutine.core :refer [cr]])
+  (:import
+   [darkleaf.generator LoomGenerator]))
 
 (def interrupted-exception
   #?(:clj  (Error. "Interrupted generator")
@@ -54,7 +56,8 @@
     nil))
 
 (defn- generator? [x]
-  (instance? Generator x))
+  (or (instance? Generator x)
+      (instance? LoomGenerator x)))
 
 (defn- one? [coll]
   (= 1 (count coll)))

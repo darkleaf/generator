@@ -52,21 +52,28 @@ public class LoomGenerator extends Continuation implements Generator {
     }
 
     public Object _next(Object covalue) {
+        this.rejectDone();
         this.covalue = covalue;
         this.run();
         return null;
     }
 
     public Object _throw(Object throwable) {
+        this.rejectDone();
         this.coerror = (Throwable)throwable;
         this.run();
         return null;
     }
 
     public Object _return(Object returnValue) {
+        this.rejectDone();
         this.returnValue = returnValue;
         this.coerror = INTERRUPTED_EXCEPTION;
         this.run();
         return null;
+    }
+
+    private void rejectDone() {
+        if (this.isDone()) throw new IllegalStateException("Generator is done");
     }
 }
